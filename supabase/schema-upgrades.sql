@@ -1,5 +1,6 @@
--- HumanOS Phase 1-10 Schema Upgrades
--- Run AFTER schema.sql
+-- HumanOS Phase 1-10 Schema Upgrades (idempotent)
+-- Run AFTER schema.sql and seed.sql
+-- Safe to re-run: policies use DROP IF EXISTS; tables/indexes use IF NOT EXISTS
 
 -- Extended assessment metadata (sub-scores for Big Five, IQ, etc.)
 ALTER TABLE assessment_results
@@ -101,7 +102,7 @@ INSERT INTO assessments (id, title, description, question_count, category) VALUE
   ('relationship-intelligence', 'Relationship Intelligence Assessment', 'Communication, trust, vulnerability, and emotional awareness.', 10, 'relationship')
 ON CONFLICT (id) DO NOTHING;
 
--- RLS
+-- Row Level Security
 ALTER TABLE human_blueprints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hpi_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE growth_timeline_events ENABLE ROW LEVEL SECURITY;
@@ -112,17 +113,48 @@ ALTER TABLE future_self_scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE digital_twin_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users own blueprints" ON human_blueprints FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own hpi" ON hpi_snapshots FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own timeline" ON growth_timeline_events FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own achievements" ON user_achievements FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own goals" ON user_goals FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own plans" ON growth_plans FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own scenarios" ON future_self_scenarios FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own twin" ON digital_twin_profiles FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own posts" ON community_posts FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Anyone reads community" ON community_posts FOR SELECT USING (true);
+-- Policies (drop before create for idempotency)
+DROP POLICY IF EXISTS "Users own blueprints" ON human_blueprints;
+CREATE POLICY "Users own blueprints" ON human_blueprints
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own hpi" ON hpi_snapshots;
+CREATE POLICY "Users own hpi" ON hpi_snapshots
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own timeline" ON growth_timeline_events;
+CREATE POLICY "Users own timeline" ON growth_timeline_events
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own achievements" ON user_achievements;
+CREATE POLICY "Users own achievements" ON user_achievements
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own goals" ON user_goals;
+CREATE POLICY "Users own goals" ON user_goals
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own plans" ON growth_plans;
+CREATE POLICY "Users own plans" ON growth_plans
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own scenarios" ON future_self_scenarios;
+CREATE POLICY "Users own scenarios" ON future_self_scenarios
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own twin" ON digital_twin_profiles;
+CREATE POLICY "Users own twin" ON digital_twin_profiles
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own posts" ON community_posts;
+CREATE POLICY "Users own posts" ON community_posts
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Anyone reads community" ON community_posts;
+CREATE POLICY "Anyone reads community" ON community_posts
+  FOR SELECT USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_hpi_user ON hpi_snapshots(user_id);
 CREATE INDEX IF NOT EXISTS idx_timeline_user ON growth_timeline_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_community_topic ON community_posts(topic);
+CREATE INDEX IF NOT EXISTS idx_human_blueprints_user ON human_blueprints(user_id);

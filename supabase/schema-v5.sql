@@ -1,4 +1,6 @@
--- HumanOS V5 Schema — run after schema-upgrades.sql
+-- HumanOS V5 Schema (idempotent)
+-- Run AFTER schema-upgrades.sql
+-- Safe to re-run: policies use DROP IF EXISTS; tables/indexes use IF NOT EXISTS
 
 CREATE TABLE IF NOT EXISTS life_os_scores (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -79,14 +81,42 @@ ALTER TABLE human_capital_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_memory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE future_roadmaps ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users own life_os" ON life_os_scores FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own vault" ON vault_entries FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own mission" ON user_missions FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own burnout" ON burnout_snapshots FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own relationships" ON relationship_nodes FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own capital" ON human_capital_snapshots FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own memory" ON ai_memory FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own roadmaps" ON future_roadmaps FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users own life_os" ON life_os_scores;
+CREATE POLICY "Users own life_os" ON life_os_scores
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own vault" ON vault_entries;
+CREATE POLICY "Users own vault" ON vault_entries
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own mission" ON user_missions;
+CREATE POLICY "Users own mission" ON user_missions
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own burnout" ON burnout_snapshots;
+CREATE POLICY "Users own burnout" ON burnout_snapshots
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own relationships" ON relationship_nodes;
+CREATE POLICY "Users own relationships" ON relationship_nodes
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own capital" ON human_capital_snapshots;
+CREATE POLICY "Users own capital" ON human_capital_snapshots
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own memory" ON ai_memory;
+CREATE POLICY "Users own memory" ON ai_memory
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own roadmaps" ON future_roadmaps;
+CREATE POLICY "Users own roadmaps" ON future_roadmaps
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS idx_vault_user ON vault_entries(user_id);
-CREATE INDEX IF NOT EXISTS idx_ai_memory_user ON ai_memory(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_memory_user ON ai_memory(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_life_os_user ON life_os_scores(user_id);
+CREATE INDEX IF NOT EXISTS idx_burnout_user ON burnout_snapshots(user_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_relationship_nodes_user ON relationship_nodes(user_id);
+CREATE INDEX IF NOT EXISTS idx_human_capital_user ON human_capital_snapshots(user_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_future_roadmaps_user ON future_roadmaps(user_id, generated_at DESC);

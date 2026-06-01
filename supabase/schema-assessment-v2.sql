@@ -1,5 +1,6 @@
--- HumanOS Assessment & Intelligence V2
--- Run after schema-v5.sql
+-- HumanOS Assessment & Intelligence V2 (idempotent)
+-- Run AFTER schema-v5.sql
+-- Safe to re-run: policies use DROP IF EXISTS; tables/indexes/columns use IF NOT EXISTS
 
 -- Adaptive assessment sessions (progressive, question-bank driven)
 CREATE TABLE IF NOT EXISTS assessment_sessions (
@@ -78,15 +79,29 @@ CREATE TABLE IF NOT EXISTS intelligence_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_intelligence_snapshots_user ON intelligence_snapshots(user_id, created_at DESC);
 
--- RLS
+-- Row Level Security
 ALTER TABLE assessment_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE life_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE behavioral_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_consent ENABLE ROW LEVEL SECURITY;
 ALTER TABLE intelligence_snapshots ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users own assessment_sessions" ON assessment_sessions FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own life_events" ON life_events FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own behavioral_events" ON behavioral_events FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own user_consent" ON user_consent FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own intelligence_snapshots" ON intelligence_snapshots FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users own assessment_sessions" ON assessment_sessions;
+CREATE POLICY "Users own assessment_sessions" ON assessment_sessions
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own life_events" ON life_events;
+CREATE POLICY "Users own life_events" ON life_events
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own behavioral_events" ON behavioral_events;
+CREATE POLICY "Users own behavioral_events" ON behavioral_events
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own user_consent" ON user_consent;
+CREATE POLICY "Users own user_consent" ON user_consent
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users own intelligence_snapshots" ON intelligence_snapshots;
+CREATE POLICY "Users own intelligence_snapshots" ON intelligence_snapshots
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
