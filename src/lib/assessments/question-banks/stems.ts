@@ -1,0 +1,82 @@
+/** Core stems per assessment — expanded to 200+ via generator */
+export const ASSESSMENT_STEMS: Record<
+  string,
+  { text: string; trait: string; category: string; reverseScored?: boolean; behavioral?: string }[]
+> = {
+  "emotional-intelligence": [
+    { text: "I can identify my emotions as they arise.", trait: "awareness", category: "self-awareness", behavioral: "How many times this week did you pause to name what you were feeling?" },
+    { text: "I understand what triggers my emotional reactions.", trait: "awareness", category: "self-awareness" },
+    { text: "I can calm myself when upset.", trait: "regulation", category: "self-management", behavioral: "How many days this week did you use a calming strategy before reacting?" },
+    { text: "I recover quickly after emotional setbacks.", trait: "regulation", category: "self-management" },
+    { text: "I notice others' emotional cues.", trait: "empathy", category: "social", behavioral: "How often this week did you check how someone else might be feeling?" },
+    { text: "I respond to others with appropriate empathy.", trait: "empathy", category: "social" },
+    { text: "I handle conflict without escalating emotionally.", trait: "social_skills", category: "relationships" },
+    { text: "I express my needs clearly without blame.", trait: "social_skills", category: "relationships" },
+    { text: "I avoid interacting with others whenever possible.", trait: "social_skills", category: "relationships", reverseScored: true },
+    { text: "I enjoy meaningful social interaction.", trait: "empathy", category: "social" },
+  ],
+  "self-esteem": [
+    { text: "I feel worthy of respect from others.", trait: "worth", category: "core" },
+    { text: "I am proud of who I am becoming.", trait: "worth", category: "core", behavioral: "How many days this week did you acknowledge something you did well?" },
+    { text: "I believe I can learn difficult skills.", trait: "competence", category: "growth" },
+    { text: "I compare myself negatively to others.", trait: "worth", category: "core", reverseScored: true },
+    { text: "I treat myself with kindness when I fail.", trait: "self_compassion", category: "inner" },
+    { text: "I avoid challenges because I might fail.", trait: "competence", category: "growth", reverseScored: true },
+  ],
+  loneliness: [
+    { text: "I feel connected to people who care about me.", trait: "connection", category: "belonging" },
+    { text: "I lack companionship.", trait: "connection", category: "belonging", reverseScored: true, behavioral: "How many meaningful conversations did you have this week?" },
+    { text: "I have people I can turn to in hard times.", trait: "support", category: "support" },
+    { text: "My relationships feel superficial.", trait: "depth", category: "quality", reverseScored: true },
+    { text: "I initiate social contact regularly.", trait: "initiative", category: "behavior", behavioral: "How many times did you reach out to someone socially this week?" },
+  ],
+  resilience: [
+    { text: "I bounce back quickly after setbacks.", trait: "recovery", category: "recovery" },
+    { text: "I adapt when plans change unexpectedly.", trait: "adaptability", category: "adaptability", behavioral: "How many unexpected problems did you handle without giving up this week?" },
+    { text: "I persist toward goals despite obstacles.", trait: "persistence", category: "persistence" },
+    { text: "Small failures make me want to quit.", trait: "persistence", category: "persistence", reverseScored: true },
+    { text: "I find meaning in difficult experiences.", trait: "meaning", category: "growth" },
+  ],
+  "digital-wellness": [
+    { text: "I use technology intentionally rather than habitually.", trait: "intention", category: "habits" },
+    { text: "Screen time interferes with sleep.", trait: "sleep", category: "health", reverseScored: true, behavioral: "How many nights this week did you stop screens 30+ minutes before bed?" },
+    { text: "I can focus without checking my phone.", trait: "focus", category: "attention" },
+    { text: "I feel restless when away from my devices.", trait: "dependence", category: "dependence", reverseScored: true },
+    { text: "I take regular breaks from screens.", trait: "balance", category: "habits", behavioral: "How many days did you take a planned screen break this week?" },
+  ],
+  "big-five": [
+    { text: "I enjoy exploring new ideas.", trait: "openness", category: "openness" },
+    { text: "I prefer routine over novelty.", trait: "openness", category: "openness", reverseScored: true },
+    { text: "I complete tasks on time.", trait: "conscientiousness", category: "conscientiousness", behavioral: "How many days this week did you finish planned tasks?" },
+    { text: "I am organized and detail-oriented.", trait: "conscientiousness", category: "conscientiousness" },
+    { text: "I feel energized around people.", trait: "extraversion", category: "extraversion" },
+    { text: "I prefer solitude to social events.", trait: "extraversion", category: "extraversion", reverseScored: true },
+    { text: "I trust others' good intentions.", trait: "agreeableness", category: "agreeableness" },
+    { text: "I get irritated easily.", trait: "neuroticism", category: "neuroticism" },
+    { text: "I worry about things I cannot control.", trait: "neuroticism", category: "neuroticism" },
+  ],
+  "attention-health": [
+    { text: "I can sustain focus for 25+ minutes.", trait: "focus", category: "focus", behavioral: "How many focus blocks of 25+ minutes did you complete this week?" },
+    { text: "I am easily distracted by notifications.", trait: "distraction", category: "distraction", reverseScored: true },
+    { text: "I feel mentally overloaded by tasks.", trait: "overload", category: "overload", reverseScored: true },
+    { text: "I multitask effectively without quality loss.", trait: "multitasking", category: "multitasking", reverseScored: true },
+  ],
+  "purpose-meaning": [
+    { text: "My daily activities align with what matters to me.", trait: "alignment", category: "purpose" },
+    { text: "I feel my life has direction.", trait: "direction", category: "purpose", behavioral: "How many days this week did you work on something meaningful to you?" },
+    { text: "I contribute to something larger than myself.", trait: "contribution", category: "meaning" },
+    { text: "I often wonder if my efforts matter.", trait: "direction", category: "purpose", reverseScored: true },
+  ],
+  "career-alignment": [
+    { text: "My work uses my strengths.", trait: "strengths", category: "fit" },
+    { text: "I would choose my current path again.", trait: "satisfaction", category: "fit", behavioral: "How many days this week did you feel engaged at work or study?" },
+    { text: "My values match my organization's culture.", trait: "values", category: "culture" },
+    { text: "I feel stuck in my career.", trait: "growth", category: "growth", reverseScored: true },
+  ],
+  "relationship-intelligence": [
+    { text: "I listen without planning my reply.", trait: "listening", category: "communication" },
+    { text: "I repair relationships after conflict.", trait: "repair", category: "conflict", behavioral: "How many times this week did you address tension with someone?" },
+    { text: "I set boundaries without guilt.", trait: "boundaries", category: "self" },
+    { text: "I avoid difficult conversations.", trait: "communication", category: "communication", reverseScored: true },
+  ],
+};
