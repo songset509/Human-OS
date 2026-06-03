@@ -1,8 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv, isSupabaseConfigured } from "@/lib/supabase/env";
-import { DEMO_SESSION_COOKIE } from "@/lib/demo/config";
+import { isProductionRuntime } from "@/lib/env/runtime";
+import { DEMO_SESSION_COOKIE, isDemoMode } from "@/lib/demo/config";
 import { parseDemoSessionCookie } from "@/lib/demo/session-cookie";
+
+const PUBLIC_PATHS = [
+  "/",
+  "/auth/login",
+  "/auth/signup",
+  "/auth/forgot-password",
+  "/auth/callback",
+  "/privacy",
+];
 
 const PROTECTED_PATHS = [
   "/dashboard",
@@ -32,24 +42,45 @@ const PROTECTED_PATHS = [
   "/reports",
   "/mentors",
   "/intelligence",
-  "/privacy",
 ];
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
+  if (pathname.startsWith("/api/demo/auth")) return true;
+  if (pathname.startsWith("/api/health")) return true;
+  return false;
+}
+
+function isProtectedPath(pathname: string): boolean {
+  if (isPublicPath(pathname)) return false;
+  if (pathname.startsWith("/api/")) return false;
+  return PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
 
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+  const isProtected = isProtectedPath(pathname);
   const isAuthPage =
     pathname.startsWith("/auth/login") || pathname.startsWith("/auth/signup");
 
-  // Demo mode — no Supabase required
-  if (!isSupabaseConfigured()) {
+  if (isProductionRuntime() && !isSupabaseConfigured()) {
+    if (isProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      url.searchParams.set("error", "missing_supabase_config");
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
+
+  if (isDemoMode()) {
     const demoUser = parseDemoSessionCookie(
       request.cookies.get(DEMO_SESSION_COOKIE)?.value
     );
 
     if (isProtected && !demoUser) {
       const url = request.nextUrl.clone();
-      url.pathname = "/auth/signup";
+      url.pathname = "/auth/login";
       url.searchParams.set("demo", "1");
       return NextResponse.redirect(url);
     }

@@ -42,7 +42,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       full_name: (user.user_metadata?.full_name as string) ?? null,
       created_at: user.created_at,
     };
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[getSessionUser] Supabase auth failed:", err);
+    }
     return null;
   }
 }

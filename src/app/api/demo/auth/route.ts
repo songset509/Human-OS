@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isDemoMode } from "@/lib/demo/config";
+import { isProductionRuntime } from "@/lib/env/runtime";
 import { DEMO_SESSION_COOKIE } from "@/lib/demo/config";
 import { demoSignIn, demoSignUp } from "@/lib/demo/store";
 import { serializeDemoSession } from "@/lib/demo/session-cookie";
@@ -14,8 +15,11 @@ const COOKIE_OPTIONS = {
 };
 
 export async function POST(request: Request) {
-  if (!isDemoMode()) {
-    return NextResponse.json({ error: "Demo auth disabled in production mode" }, { status: 403 });
+  if (isProductionRuntime() || !isDemoMode()) {
+    return NextResponse.json(
+      { error: "Demo auth is only available in local development without Supabase." },
+      { status: 403 }
+    );
   }
 
   const rl = rateLimit(getRateLimitKey(request, "demo-auth"), 10, 60_000);
@@ -69,6 +73,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
+  if (isProductionRuntime()) {
+    return NextResponse.json({ error: "Not available" }, { status: 403 });
+  }
   const response = NextResponse.json({ ok: true });
   response.cookies.set(DEMO_SESSION_COOKIE, "", { ...COOKIE_OPTIONS, maxAge: 0 });
   return response;

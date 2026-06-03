@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isDemoModeClient } from "@/lib/demo/config";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,7 @@ import { LoadingSpinner } from "@/components/shared/page-header";
 
 function SignupForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const demoMode = isDemoModeClient() || searchParams.get("demo") === "1";
+  const demoMode = isDemoModeClient();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

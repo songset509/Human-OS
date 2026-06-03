@@ -16,6 +16,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/dashboard";
+  const configError = searchParams.get("error");
   const demoMode = isDemoModeClient();
 
   const [email, setEmail] = useState("");
@@ -74,6 +75,15 @@ function LoginForm() {
         <CardDescription>Sign in to continue your flourishing journey</CardDescription>
       </CardHeader>
       <CardContent>
+        {configError === "missing_supabase_config" && (
+          <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+            <p className="font-medium text-rose-100">Supabase not configured</p>
+            <p className="mt-1 text-xs text-rose-200/90">
+              Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel
+              environment variables, then redeploy.
+            </p>
+          </div>
+        )}
         {demoMode && (
           <div className="mb-4 flex gap-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-4 text-sm text-violet-200">
             <Zap className="h-5 w-5 shrink-0 text-violet-400" />

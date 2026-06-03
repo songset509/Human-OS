@@ -37,27 +37,41 @@ interface DemoStoreFile {
 const DATA_DIR = `${process.cwd()}/.data`;
 const STORE_PATH = `${DATA_DIR}/demo-store.json`;
 
+/** Vercel/serverless filesystem is read-only — never mkdir/write in production. */
+function canPersistDemoStoreToDisk(): boolean {
+  if (process.env.VERCEL === "1") return false;
+  if (process.env.NODE_ENV === "production") return false;
+  return true;
+}
+
 function loadStore(): DemoStoreFile {
+  if (!canPersistDemoStoreToDisk()) {
+    return { users: {}, data: {}, global_community: [] };
+  }
   try {
-    // Dynamic require to keep out of edge bundles
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require("fs") as typeof import("fs");
     if (fs.existsSync(STORE_PATH)) {
       return JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as DemoStoreFile;
     }
   } catch {
-    // ignore
+    // ignore — use in-memory store
   }
   return { users: {}, data: {}, global_community: [] };
 }
 
 function saveStore(store: DemoStoreFile) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require("fs") as typeof import("fs");
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!canPersistDemoStoreToDisk()) return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("fs") as typeof import("fs");
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
+  } catch {
+    // In-memory only if disk write fails
   }
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
 function emptyUserData(): DemoUserData {
