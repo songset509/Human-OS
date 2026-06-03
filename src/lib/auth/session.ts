@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { SessionUser } from "@/lib/auth/session-types";
-import { DEMO_SESSION_COOKIE, isDemoMode } from "@/lib/demo/config";
+import { DEMO_SESSION_COOKIE, isDemoMode, assertNotDemoInProduction } from "@/lib/demo/config";
+import { assertSupabaseProviderOnly } from "@/lib/providers";
 import { parseDemoSessionCookie } from "@/lib/demo/session-cookie";
 import { demoGetUserById } from "@/lib/demo/store";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +22,10 @@ function demoUserToSession(user: {
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
+  assertSupabaseProviderOnly();
+
   if (isDemoMode()) {
+    assertNotDemoInProduction();
     const cookieStore = await cookies();
     const parsed = parseDemoSessionCookie(cookieStore.get(DEMO_SESSION_COOKIE)?.value);
     if (!parsed) return null;

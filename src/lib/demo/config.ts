@@ -1,21 +1,24 @@
-import { allowDemoProvider, isProductionRuntime } from "@/lib/env/runtime";
+import { allowDemoProvider } from "@/lib/env/runtime";
+import { assertDemoProviderAllowed } from "@/lib/demo/guard";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-/** Demo mode: local development only, when Supabase is not configured. Never on Vercel/production. */
+/** Demo mode: NODE_ENV=development only, when Supabase is not configured. */
 export function isDemoMode(): boolean {
-  if (isProductionRuntime()) return false;
   if (!allowDemoProvider()) return false;
   return !isSupabaseConfigured();
 }
 
+/** Throws if demo mode is active outside development (defense in depth). */
+export function assertNotDemoInProduction(): void {
+  if (isDemoMode()) {
+    assertDemoProviderAllowed("isDemoMode");
+  }
+}
+
 /** Client-side demo detection — must match server rules for production builds. */
 export function isDemoModeClient(): boolean {
-  if (
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ||
-    process.env.NODE_ENV === "production"
-  ) {
-    return false;
-  }
+  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") return false;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";

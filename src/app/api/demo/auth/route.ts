@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isDemoMode } from "@/lib/demo/config";
-import { isProductionRuntime } from "@/lib/env/runtime";
+import { assertDemoProviderAllowed } from "@/lib/demo/guard";
 import { DEMO_SESSION_COOKIE } from "@/lib/demo/config";
 import { demoSignIn, demoSignUp } from "@/lib/demo/store";
 import { serializeDemoSession } from "@/lib/demo/session-cookie";
@@ -15,9 +15,17 @@ const COOKIE_OPTIONS = {
 };
 
 export async function POST(request: Request) {
-  if (isProductionRuntime() || !isDemoMode()) {
+  if (!isDemoMode()) {
     return NextResponse.json(
       { error: "Demo auth is only available in local development without Supabase." },
+      { status: 403 }
+    );
+  }
+  try {
+    assertDemoProviderAllowed("POST /api/demo/auth");
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Demo auth not available" },
       { status: 403 }
     );
   }
@@ -73,7 +81,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  if (isProductionRuntime()) {
+  try {
+    assertDemoProviderAllowed("DELETE /api/demo/auth");
+  } catch {
     return NextResponse.json({ error: "Not available" }, { status: 403 });
   }
   const response = NextResponse.json({ ok: true });

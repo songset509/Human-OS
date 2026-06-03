@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   MoodLog,
 } from "@/types";
+import { assertDemoProviderAllowed } from "@/lib/demo/guard";
 
 export interface DemoUser {
   id: string;
@@ -34,46 +35,6 @@ interface DemoStoreFile {
   global_community: { id: string; topic: string; content: string; created_at: string }[];
 }
 
-const DATA_DIR = `${process.cwd()}/.data`;
-const STORE_PATH = `${DATA_DIR}/demo-store.json`;
-
-/** Vercel/serverless filesystem is read-only — never mkdir/write in production. */
-function canPersistDemoStoreToDisk(): boolean {
-  if (process.env.VERCEL === "1") return false;
-  if (process.env.NODE_ENV === "production") return false;
-  return true;
-}
-
-function loadStore(): DemoStoreFile {
-  if (!canPersistDemoStoreToDisk()) {
-    return { users: {}, data: {}, global_community: [] };
-  }
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("fs") as typeof import("fs");
-    if (fs.existsSync(STORE_PATH)) {
-      return JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as DemoStoreFile;
-    }
-  } catch {
-    // ignore — use in-memory store
-  }
-  return { users: {}, data: {}, global_community: [] };
-}
-
-function saveStore(store: DemoStoreFile) {
-  if (!canPersistDemoStoreToDisk()) return;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("fs") as typeof import("fs");
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
-  } catch {
-    // In-memory only if disk write fails
-  }
-}
-
 function emptyUserData(): DemoUserData {
   return {
     assessment_results: [],
@@ -93,17 +54,13 @@ declare global {
   var __humanosDemoStore: DemoStoreFile | undefined;
 }
 
+/** In-memory only — no filesystem access (safe for Vercel serverless). */
 function getStore(): DemoStoreFile {
+  assertDemoProviderAllowed("demo/store.getStore");
   if (!global.__humanosDemoStore) {
-    const loaded = loadStore();
-    if (!loaded.global_community) loaded.global_community = [];
-    global.__humanosDemoStore = loaded;
+    global.__humanosDemoStore = { users: {}, data: {}, global_community: [] };
   }
   return global.__humanosDemoStore;
-}
-
-function persist() {
-  saveStore(getStore());
 }
 
 function ensureUserData(userId: string): DemoUserData {
@@ -123,6 +80,7 @@ function ensureUserData(userId: string): DemoUserData {
 }
 
 export function demoSignUp(email: string, password: string, fullName: string): DemoUser {
+  assertDemoProviderAllowed("demoSignUp");
   const store = getStore();
   const existing = Object.values(store.users).find(
     (u) => u.email.toLowerCase() === email.toLowerCase()
@@ -141,11 +99,11 @@ export function demoSignUp(email: string, password: string, fullName: string): D
 
   store.users[user.id] = user;
   store.data[user.id] = emptyUserData();
-  persist();
   return user;
 }
 
 export function demoSignIn(email: string, password: string): DemoUser {
+  assertDemoProviderAllowed("demoSignIn");
   const store = getStore();
   const user = Object.values(store.users).find(
     (u) => u.email.toLowerCase() === email.toLowerCase()
@@ -157,18 +115,20 @@ export function demoSignIn(email: string, password: string): DemoUser {
 }
 
 export function demoGetUserById(id: string): DemoUser | null {
+  if (process.env.NODE_ENV !== "development") return null;
   return getStore().users[id] ?? null;
 }
 
 export function demoUpdateProfile(userId: string, fullName: string) {
+  assertDemoProviderAllowed("demoUpdateProfile");
   const store = getStore();
   if (store.users[userId]) {
     store.users[userId].full_name = fullName;
-    persist();
   }
 }
 
 export function demoGetAssessmentResults(userId: string): AssessmentResult[] {
+  assertDemoProviderAllowed("demoGetAssessmentResults");
   return [...ensureUserData(userId).assessment_results].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
@@ -178,6 +138,7 @@ export function demoSaveAssessmentResult(
   userId: string,
   result: Omit<AssessmentResult, "id" | "user_id" | "created_at">
 ): AssessmentResult {
+  assertDemoProviderAllowed("demoSaveAssessmentResult");
   const data = ensureUserData(userId);
   const entry: AssessmentResult = {
     id: randomUUID(),
@@ -186,11 +147,11 @@ export function demoSaveAssessmentResult(
     created_at: new Date().toISOString(),
   };
   data.assessment_results.unshift(entry);
-  persist();
   return entry;
 }
 
 export function demoGetMoodLogs(userId: string, limit = 30): MoodLog[] {
+  assertDemoProviderAllowed("demoGetMoodLogs");
   return [...ensureUserData(userId).mood_logs]
     .sort((a, b) => new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime())
     .slice(0, limit);
@@ -202,6 +163,7 @@ export function demoSaveMoodLog(
   note: string | null,
   loggedAt: string
 ): MoodLog {
+  assertDemoProviderAllowed("demoSaveMoodLog");
   const data = ensureUserData(userId);
   const existing = data.mood_logs.findIndex((m) => m.logged_at === loggedAt);
   const entry: MoodLog = {
@@ -217,11 +179,11 @@ export function demoSaveMoodLog(
   } else {
     data.mood_logs.unshift(entry);
   }
-  persist();
   return entry;
 }
 
 export function demoGetChallengeProgress(userId: string): ChallengeProgress[] {
+  assertDemoProviderAllowed("demoGetChallengeProgress");
   return [...ensureUserData(userId).challenge_progress].sort(
     (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
   );
@@ -231,6 +193,7 @@ export function demoSaveChallengeProgress(
   userId: string,
   progress: ChallengeProgress
 ) {
+  assertDemoProviderAllowed("demoSaveChallengeProgress");
   const data = ensureUserData(userId);
   const idx = data.challenge_progress.findIndex((p) => p.id === progress.id);
   if (idx >= 0) {
@@ -238,17 +201,18 @@ export function demoSaveChallengeProgress(
   } else {
     data.challenge_progress.unshift(progress);
   }
-  persist();
   return progress;
 }
 
 export function demoFindActiveChallenge(userId: string, challengeId: string) {
+  assertDemoProviderAllowed("demoFindActiveChallenge");
   return ensureUserData(userId).challenge_progress.find(
     (p) => p.challenge_id === challengeId && p.is_active
   );
 }
 
 export function demoGetConversation(userId: string): AIConversation | null {
+  assertDemoProviderAllowed("demoGetConversation");
   return ensureUserData(userId).ai_conversation;
 }
 
@@ -257,6 +221,7 @@ export function demoSaveConversation(
   messages: ChatMessage[],
   conversationId?: string
 ): AIConversation {
+  assertDemoProviderAllowed("demoSaveConversation");
   const data = ensureUserData(userId);
   const conv: AIConversation = {
     id: conversationId ?? data.ai_conversation?.id ?? randomUUID(),
@@ -266,23 +231,24 @@ export function demoSaveConversation(
     updated_at: new Date().toISOString(),
   };
   data.ai_conversation = conv;
-  persist();
   return conv;
 }
 
 export function demoGetAchievements(userId: string) {
+  assertDemoProviderAllowed("demoGetAchievements");
   return ensureUserData(userId).achievements;
 }
 
 export function demoUnlockAchievements(userId: string, ids: string[]) {
+  assertDemoProviderAllowed("demoUnlockAchievements");
   const data = ensureUserData(userId);
   for (const id of ids) {
     if (!data.achievements.includes(id)) data.achievements.push(id);
   }
-  persist();
 }
 
 export function demoSaveHPISnapshot(userId: string, score: number, dimensions: Record<string, number>) {
+  assertDemoProviderAllowed("demoSaveHPISnapshot");
   const data = ensureUserData(userId);
   data.hpi_snapshots.unshift({ score, dimensions, recorded_at: new Date().toISOString() });
   data.timeline_events.unshift({
@@ -292,14 +258,15 @@ export function demoSaveHPISnapshot(userId: string, score: number, dimensions: R
     value: score,
     recorded_at: new Date().toISOString(),
   });
-  persist();
 }
 
 export function demoGetHPISnapshots(userId: string) {
+  assertDemoProviderAllowed("demoGetHPISnapshots");
   return ensureUserData(userId).hpi_snapshots ?? [];
 }
 
 export function demoGetTimeline(userId: string) {
+  assertDemoProviderAllowed("demoGetTimeline");
   return ensureUserData(userId).timeline_events;
 }
 
@@ -307,49 +274,53 @@ export function demoAddTimelineEvent(
   userId: string,
   event: Omit<DemoUserData["timeline_events"][0], "id">
 ) {
+  assertDemoProviderAllowed("demoAddTimelineEvent");
   const data = ensureUserData(userId);
   data.timeline_events.unshift({ id: randomUUID(), ...event });
-  persist();
 }
 
 export function demoSaveFutureSelf(userId: string, input: object, predictions: object) {
+  assertDemoProviderAllowed("demoSaveFutureSelf");
   const data = ensureUserData(userId);
   const entry = { id: randomUUID(), input, predictions, created_at: new Date().toISOString() };
   data.future_self_scenarios.unshift(entry);
-  persist();
   return entry;
 }
 
 export function demoGetFutureSelfScenarios(userId: string) {
+  assertDemoProviderAllowed("demoGetFutureSelfScenarios");
   return ensureUserData(userId).future_self_scenarios;
 }
 
 export function demoAddCommunityPost(userId: string, topic: string, content: string) {
+  assertDemoProviderAllowed("demoAddCommunityPost");
   const store = getStore();
   const post = { id: randomUUID(), topic, content, created_at: new Date().toISOString() };
   if (!store.global_community) store.global_community = [];
   store.global_community.unshift(post);
   ensureUserData(userId).community_posts.unshift(post);
-  persist();
   return post;
 }
 
 export function demoGetCommunityPosts(topic?: string) {
+  assertDemoProviderAllowed("demoGetCommunityPosts");
   const store = getStore();
   const posts = store.global_community ?? [];
   return topic ? posts.filter((p) => p.topic === topic) : posts;
 }
 
 export function demoGetAllUserResults(): AssessmentResult[][] {
+  assertDemoProviderAllowed("demoGetAllUserResults");
   const store = getStore();
   return Object.values(store.data).map((d) => d.assessment_results);
 }
 
 export function demoSaveGoals(userId: string, goals: DemoUserData["goals"]) {
+  assertDemoProviderAllowed("demoSaveGoals");
   ensureUserData(userId).goals = goals;
-  persist();
 }
 
 export function demoGetGoals(userId: string) {
+  assertDemoProviderAllowed("demoGetGoals");
   return ensureUserData(userId).goals;
 }

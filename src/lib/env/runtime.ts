@@ -1,6 +1,6 @@
 /**
  * Runtime environment detection for HumanOS.
- * Production (Vercel) must never use local demo filesystem or demo auth.
+ * DemoProvider is allowed only when NODE_ENV === "development".
  */
 
 export function isProductionRuntime(): boolean {
@@ -12,9 +12,10 @@ export function isProductionRuntime(): boolean {
 }
 
 export function isLocalDevelopment(): boolean {
-  return !isProductionRuntime();
+  return process.env.NODE_ENV === "development";
 }
 
+/** Demo mode only in local development (never preview/production builds). */
 export function allowDemoProvider(): boolean {
   return isLocalDevelopment() && process.env.HUMANOS_ALLOW_DEMO !== "false";
 }

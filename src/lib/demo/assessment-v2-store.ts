@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { assertDemoProviderAllowed } from "@/lib/demo/guard";
 
 export interface DemoAssessmentSession {
   id: string;
@@ -41,6 +42,7 @@ declare global {
 }
 
 function getV2Store(): Record<string, V2UserData> {
+  assertDemoProviderAllowed("assessment-v2-store");
   if (!global.__humanosV2Store) global.__humanosV2Store = {};
   return global.__humanosV2Store;
 }

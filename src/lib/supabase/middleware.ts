@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/auth/login",
   "/auth/signup",
   "/auth/forgot-password",
+  "/auth/reset-password",
   "/auth/callback",
   "/privacy",
 ];
@@ -61,7 +62,9 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = isProtectedPath(pathname);
   const isAuthPage =
-    pathname.startsWith("/auth/login") || pathname.startsWith("/auth/signup");
+    pathname.startsWith("/auth/login") ||
+    pathname.startsWith("/auth/signup") ||
+    pathname.startsWith("/auth/forgot-password");
 
   if (isProductionRuntime() && !isSupabaseConfigured()) {
     if (isProtected) {

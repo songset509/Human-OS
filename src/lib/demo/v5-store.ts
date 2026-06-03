@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { assertDemoProviderAllowed } from "@/lib/demo/guard";
 
 interface V5UserData {
   life_os: Record<string, number> | null;
@@ -13,6 +14,7 @@ declare global {
 }
 
 function getV5Store(): Record<string, V5UserData> {
+  assertDemoProviderAllowed("v5-store");
   if (!global.__humanosV5Store) global.__humanosV5Store = {};
   return global.__humanosV5Store;
 }
