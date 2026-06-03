@@ -4,6 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  buildConfirmRecoveryUrl,
+  hasRecoveryQueryParams,
+  recoveryErrorMessage,
+  type RecoveryLinkError,
+} from "@/lib/auth/recovery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,74 +21,73 @@ function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const linkError = searchParams.get("error") as RecoveryLinkError | null;
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    linkError ? recoveryErrorMessage(linkError) : null
+  );
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
-  const [initializing, setInitializing] = useState(true);
+  const [initializing, setInitializing] = useState(() => !linkError);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    if (linkError) return;
+
+    if (hasRecoveryQueryParams(searchParams)) {
+      router.replace(buildConfirmRecoveryUrl(searchParams));
+      return;
+    }
+
     let cancelled = false;
 
-    async function establishRecoverySession() {
+    async function ensureRecoverySession() {
       const supabase = createClient();
-      const code = searchParams.get("code");
-      const tokenHash = searchParams.get("token_hash");
-      const type = searchParams.get("type");
 
       try {
-        if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) throw exchangeError;
-        } else if (tokenHash && type === "recovery") {
-          const { error: otpError } = await supabase.auth.verifyOtp({
-            type: "recovery",
-            token_hash: tokenHash,
-          });
-          if (otpError) throw otpError;
-        } else {
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          if (sessionError) throw sessionError;
-          if (!session) {
-            throw new Error(
-              "Invalid or expired reset link. Request a new password reset email."
-            );
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        if (hash.includes("access_token")) {
+          const params = new URLSearchParams(hash.replace(/^#/, ""));
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
+          if (access_token && refresh_token) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            if (sessionError) throw sessionError;
+            window.history.replaceState(null, "", window.location.pathname);
           }
         }
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
         if (!user) {
-          throw new Error(
-            "Invalid or expired reset link. Request a new password reset email."
-          );
+          throw new Error("invalid");
         }
 
         if (!cancelled) {
           setSessionReady(true);
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to verify reset link. Please request a new email."
-          );
+          setError(recoveryErrorMessage("invalid"));
+          setSessionReady(false);
         }
       } finally {
         if (!cancelled) setInitializing(false);
       }
     }
 
-    establishRecoverySession();
+    ensureRecoverySession();
 
     return () => {
       cancelled = true;
     };
-  }, [searchParams]);
+  }, [searchParams, router, linkError]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +119,8 @@ function ResetPasswordForm() {
       setLoading(false);
     }
   }
+
+  const showExpiredOrInvalid = !initializing && !success && !sessionReady && Boolean(error);
 
   return (
     <Card className="relative w-full max-w-md border-white/10">
@@ -181,13 +188,11 @@ function ResetPasswordForm() {
           </form>
         )}
 
-        {!initializing && !success && !sessionReady && (
+        {showExpiredOrInvalid && (
           <div className="space-y-4">
-            {error && (
-              <p className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-                {error}
-              </p>
-            )}
+            <p className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+              {error}
+            </p>
             <Link href="/auth/forgot-password" className="block">
               <Button variant="secondary" className="w-full">
                 Request new reset link
