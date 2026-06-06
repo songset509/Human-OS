@@ -1,9 +1,10 @@
 import { isDemoMode } from "@/lib/demo/config";
+import { isProductionRuntime } from "@/lib/env/runtime";
 import Link from "next/link";
 import { Info } from "lucide-react";
 
 export function DemoBanner() {
-  if (!isDemoMode()) return null;
+  if (isProductionRuntime() || !isDemoMode()) return null;
 
   return (
     <div className="mb-6 flex items-start gap-3 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm">

@@ -1,4 +1,4 @@
-import { requireSession, jsonOk, jsonError } from "@/lib/api/response";
+import { requireSession, jsonOk, jsonError, safeErrorMessage } from "@/lib/api/response";
 import { getRateLimitKey, rateLimit } from "@/lib/security/rate-limit";
 import OpenAI from "openai";
 import { getUpgradeContext } from "@/lib/data/upgrade-data";
@@ -13,42 +13,53 @@ const MENTORS: Record<string, string> = {
   purpose: "You are a purpose mentor focused on meaning, values, and life direction.",
 };
 
+const OPENAI_TIMEOUT_MS = 25_000;
+
 export async function POST(request: Request) {
-  const { error } = await requireSession();
-  if (error) return error;
+  const session = await requireSession();
+  if (session.error) return session.error;
 
   const rl = rateLimit(getRateLimitKey(request, "mentors"), 20, 60_000);
   if (!rl.allowed) return jsonError("Too many requests", 429);
 
-  const { mentor, message } = (await request.json()) as { mentor: string; message: string };
-  if (!mentor || !message?.trim()) return jsonError("Mentor and message required");
+  try {
+    const { mentor, message } = (await request.json()) as { mentor: string; message: string };
+    if (!mentor || !message?.trim()) return jsonError("Mentor and message required");
 
-  const system = MENTORS[mentor] ?? MENTORS.psychology;
-  const ctx = await getUpgradeContext();
-  const memory = await getAIMemoryContext();
+    const system = MENTORS[mentor] ?? MENTORS.psychology;
+    const ctx = await getUpgradeContext();
+    const memory = await getAIMemoryContext();
 
-  const key = process.env.OPENAI_API_KEY?.trim();
-  let reply: string;
+    const key = process.env.OPENAI_API_KEY?.trim();
+    let reply: string;
 
-  if (key && !key.includes("your_openai")) {
-    const openai = new OpenAI({ apiKey: key });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: `${system}\n\nUser profile: Flourishing ${ctx?.flourishing.scores.overall ?? 50}/100. ${memory}` },
-        { role: "user", content: message },
-      ],
-      max_tokens: 500,
-    });
-    reply = completion.choices[0]?.message?.content ?? "I'm here to help. Could you share more?";
-  } else {
-    reply = `As your ${mentor} mentor: Reflect on "${message.slice(0, 80)}..." — what small step aligns with your values today?`;
+    if (key && !key.includes("your_openai")) {
+      const openai = new OpenAI({ apiKey: key, timeout: OPENAI_TIMEOUT_MS });
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `${system}\n\nUser profile: Flourishing ${ctx?.flourishing.scores.overall ?? 50}/100. ${memory}`,
+          },
+          { role: "user", content: message },
+        ],
+        max_tokens: 500,
+      });
+      reply = completion.choices[0]?.message?.content ?? "I'm here to help. Could you share more?";
+    } else {
+      reply = `As your ${mentor} mentor: Reflect on "${message.slice(0, 80)}..." — what small step aligns with your values today? (Add OPENAI_API_KEY for full AI responses.)`;
+    }
+
+    await storeAIMemory(`mentor_${mentor}`, { question: message, answer: reply.slice(0, 200) });
+    return jsonOk({ reply, mentor });
+  } catch (err) {
+    return jsonError(safeErrorMessage(err), 500);
   }
-
-  await storeAIMemory(`mentor_${mentor}`, { question: message, answer: reply.slice(0, 200) });
-  return jsonOk({ reply, mentor });
 }
 
 export async function GET() {
+  const session = await requireSession();
+  if (session.error) return session.error;
   return jsonOk({ mentors: Object.keys(MENTORS) });
 }

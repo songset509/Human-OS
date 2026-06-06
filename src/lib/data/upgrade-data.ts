@@ -32,7 +32,10 @@ import {
   generateMonthlyRoadmap,
   generateWeeklyPlan,
 } from "@/lib/engines/life-architect-engine";
-import { computeResearchStats } from "@/lib/engines/research-engine";
+import {
+  computePersonalResearchStats,
+  computeResearchStats,
+} from "@/lib/engines/research-engine";
 import {
   sbGetAchievements,
   sbGetCommunity,
@@ -40,6 +43,7 @@ import {
   sbGetTimeline,
   sbInsertTimeline,
   sbPostCommunity,
+  sbGetFutureSelfScenarios,
   sbSaveFutureSelf,
   sbSaveHPISnapshot,
   sbUnlockAchievements,
@@ -171,9 +175,23 @@ export async function getLifeArchitectPlan() {
 
 export async function getResearchDashboard() {
   if (isDemoMode()) {
-    return computeResearchStats(demoGetAllUserResults());
+    return {
+      stats: computeResearchStats(demoGetAllUserResults()),
+      scope: "platform" as const,
+    };
   }
-  return computeResearchStats([]);
+
+  const [results, moods, user] = await Promise.all([
+    getAssessmentResults(),
+    getMoodLogs(),
+    getSessionUser(),
+  ]);
+  const hpiSnapshots = user ? await sbGetHPISnapshots(user.id) : [];
+
+  return {
+    stats: computePersonalResearchStats(results, hpiSnapshots, moods),
+    scope: "personal" as const,
+  };
 }
 
 export async function postCommunityMessage(topic: string, content: string) {
@@ -199,7 +217,7 @@ export async function getFutureSelfHistory() {
   const user = await getSessionUser();
   if (!user) return [];
   if (isDemoMode()) return demoGetFutureSelfScenarios(user.id) ?? [];
-  return [];
+  return sbGetFutureSelfScenarios(user.id);
 }
 
 export type { HPIDimensions };

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { getUpgradeContext, recordHPIIfNeeded, syncAchievements } from "@/lib/data/upgrade-data";
+import {
+  getHPITrend,
+  getUpgradeContext,
+  recordHPIIfNeeded,
+  syncAchievements,
+} from "@/lib/data/upgrade-data";
 import { getSessionUser } from "@/lib/auth/session";
-import { isDemoMode } from "@/lib/demo/config";
-import { demoGetHPISnapshots } from "@/lib/demo/store";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -13,7 +16,7 @@ export async function GET() {
 
   await syncAchievements(user.id);
   const hpi = await recordHPIIfNeeded(user.id);
-  const trend = isDemoMode() ? demoGetHPISnapshots(user.id) : [];
+  const trend = await getHPITrend(user.id);
 
   return NextResponse.json({
     blueprint: ctx.blueprint,

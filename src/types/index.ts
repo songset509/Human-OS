@@ -224,6 +224,7 @@ export interface CommunityPost {
 }
 
 export interface ResearchStats {
+  hasData: boolean;
   avgFlourishing: number;
   avgDigitalWellness: number;
   avgRelationship: number;

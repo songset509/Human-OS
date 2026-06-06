@@ -1,4 +1,5 @@
 import { isDemoMode } from "@/lib/demo/config";
+import { detectAssessmentTrends, formatMemoryContext } from "@/lib/engines/memory-engine";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   getAssessmentResults,
@@ -229,8 +230,10 @@ export async function getAIMemoryContext(): Promise<string> {
       .limit(10);
     memories = data ?? [];
   }
-  if (memories.length === 0) return "";
-  return `User memory (recent): ${JSON.stringify(memories.slice(0, 5))}`;
+  const results = await getAssessmentResults();
+  const trends = detectAssessmentTrends(results);
+  const context = formatMemoryContext(memories, trends);
+  return context || "";
 }
 
 export { LIFE_OS_DIMENSIONS };

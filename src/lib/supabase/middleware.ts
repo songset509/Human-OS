@@ -44,6 +44,8 @@ const PROTECTED_PATHS = [
   "/reports",
   "/mentors",
   "/intelligence",
+  "/getting-started",
+  "/settings",
 ];
 
 function isPublicPath(pathname: string): boolean {

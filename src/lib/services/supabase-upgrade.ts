@@ -112,3 +112,14 @@ export async function sbSaveFutureSelf(userId: string, input: object, prediction
     .single();
   return data;
 }
+
+export async function sbGetFutureSelfScenarios(userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("future_self_scenarios")
+    .select("id, input, predictions, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return data ?? [];
+}
