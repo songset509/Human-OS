@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoModeClient } from "@/lib/demo/config";
+import { shouldShowDemoUIClient } from "@/lib/demo/ui";
 import { User, LogOut, Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
@@ -22,7 +22,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const demoMode = isDemoModeClient();
+  const demoMode = shouldShowDemoUIClient();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(true);

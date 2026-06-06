@@ -12,38 +12,58 @@ const STEPS = [
   {
     id: "welcome",
     title: "Welcome to HumanOS",
-    description: "Your Life Operating System for human flourishing.",
+    description: "Your AI-powered Life Operating System for human growth.",
     href: "/dashboard",
+    milestone: "Journey begins",
   },
   {
     id: "assessment",
-    title: "Complete a core assessment",
+    title: "Core Assessment",
     description: "Establish your baseline flourishing score.",
     href: "/testing-hub",
+    milestone: "Baseline set",
   },
   {
-    id: "blueprint",
-    title: "View your Human Blueprint",
-    description: "See your strengths, gaps, and growth map.",
-    href: "/blueprint",
-  },
-  {
-    id: "coach",
-    title: "Meet your AI Coach",
-    description: "Get personalized guidance based on your profile.",
-    href: "/coach",
-  },
-  {
-    id: "insight",
-    title: "Read your first insight",
-    description: "Actionable recommendations from your data.",
-    href: "/insights",
+    id: "personality",
+    title: "Personality Mapping",
+    description: "Complete Big Five or advanced personality tests.",
+    href: "/assessments/big-five",
+    milestone: "Profile depth",
   },
   {
     id: "goal",
-    title: "Set your first goal",
-    description: "Define direction in Mission or Vault.",
+    title: "Goal Creation",
+    description: "Define your mission and first goals.",
     href: "/mission",
+    milestone: "Direction set",
+  },
+  {
+    id: "blueprint",
+    title: "Life Blueprint",
+    description: "See your strategic growth roadmap.",
+    href: "/blueprint",
+    milestone: "Blueprint ready",
+  },
+  {
+    id: "coach",
+    title: "AI Coach Introduction",
+    description: "Get personalized guidance from your AI coach.",
+    href: "/coach",
+    milestone: "Coach connected",
+  },
+  {
+    id: "insight",
+    title: "First Insight Report",
+    description: "Read actionable recommendations from your data.",
+    href: "/insights",
+    milestone: "First insight",
+  },
+  {
+    id: "vault",
+    title: "Knowledge Vault",
+    description: "Save your first journal or reflection.",
+    href: "/vault",
+    milestone: "Second brain started",
   },
 ] as const;
 
@@ -116,6 +136,7 @@ export default function GettingStartedPage() {
                   <p className="text-xs text-zinc-600 mb-1">Step {i + 1}</p>
                   <p className="font-medium text-zinc-100">{step.title}</p>
                   <p className="text-sm text-zinc-500 mt-1">{step.description}</p>
+                  <p className="text-xs text-violet-400/80 mt-1">🎯 {step.milestone}</p>
                 </div>
                 <Link href={step.href}>
                   <Button size="sm" variant="secondary" className="gap-1 shrink-0">

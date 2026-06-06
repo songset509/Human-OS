@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/auth/confirm",
   "/auth/callback",
   "/privacy",
+  "/academy",
 ];
 
 const PROTECTED_PATHS = [
@@ -46,6 +47,8 @@ const PROTECTED_PATHS = [
   "/intelligence",
   "/getting-started",
   "/settings",
+  "/growth",
+  "/community/networks",
 ];
 
 function isPublicPath(pathname: string): boolean {

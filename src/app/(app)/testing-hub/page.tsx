@@ -15,6 +15,17 @@ const iconMap: Record<string, React.ElementType> = {
   briefcase: Briefcase, "heart-handshake": HeartHandshake,
 };
 
+const INTELLIGENCE_CATEGORIES = [
+  "Cognitive Intelligence",
+  "Emotional Intelligence",
+  "Personality",
+  "Leadership",
+  "Productivity",
+  "Burnout",
+  "Career Alignment",
+  "Learning Style",
+];
+
 export default async function TestingHubPage() {
   const assessments = getAdvancedAssessmentsList();
   const results = await getAssessmentResults();
@@ -26,15 +37,28 @@ export default async function TestingHubPage() {
   return (
     <div>
       <PageHeader
-        title="Advanced Testing Hub"
-        description="Deep psychological assessments — Big Five, IQ, Attention, Purpose, Career, and Relationships"
+        title="Human Intelligence Center"
+        description="Measure growth scientifically — history, trends, radar charts, and AI-powered reports"
       />
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {INTELLIGENCE_CATEGORIES.map((cat) => (
+          <span
+            key={cat}
+            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-400"
+          >
+            {cat}
+          </span>
+        ))}
+      </div>
 
       <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-6 flex items-start gap-4">
         <FlaskConical className="h-6 w-6 text-violet-400 shrink-0" />
         <div>
-          <p className="text-sm text-zinc-300 font-medium">Unlock your Human Potential Index</p>
-          <p className="text-xs text-zinc-500 mt-1">Complete advanced assessments to power your Blueprint, HPI, and Digital Twin.</p>
+          <p className="text-sm text-zinc-300 font-medium">Assessment history stored in Supabase</p>
+          <p className="text-xs text-zinc-500 mt-1">
+            Results power your Blueprint, HPI, Digital Twin, and AI memory. Retake tests to track growth over time.
+          </p>
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoModeClient } from "@/lib/demo/config";
+import { shouldShowDemoUIClient } from "@/lib/demo/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ function LoginForm() {
   const redirect = searchParams.get("redirect") ?? "/dashboard";
   const configError = searchParams.get("error");
   const passwordUpdated = searchParams.get("message") === "password_updated";
-  const demoMode = isDemoModeClient();
+  const demoMode = shouldShowDemoUIClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

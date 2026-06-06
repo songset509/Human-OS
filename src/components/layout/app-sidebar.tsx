@@ -47,7 +47,7 @@ const navGroups = [
   {
     label: "Assess & Track",
     items: [
-      { href: "/testing-hub", label: "Testing Hub", icon: FlaskConical },
+      { href: "/testing-hub", label: "Intelligence Center", icon: FlaskConical },
       { href: "/assessments", label: "Core Assessments", icon: ClipboardList },
       { href: "/mood", label: "Mood", icon: Smile },
       { href: "/results", label: "Results", icon: BarChart3 },
@@ -80,6 +80,9 @@ const navGroups = [
     label: "Community",
     items: [
       { href: "/community", label: "Growth Circles", icon: Users },
+      { href: "/community/networks", label: "Human Networks", icon: Users },
+      { href: "/growth", label: "Growth Analytics", icon: TrendingUp },
+      { href: "/academy", label: "Academy", icon: Sparkles },
       { href: "/achievements", label: "Achievements", icon: Award },
       { href: "/insights", label: "Insights", icon: Lightbulb },
       { href: "/intelligence", label: "Intelligence", icon: Brain },

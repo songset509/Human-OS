@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoModeClient } from "@/lib/demo/config";
+import { shouldShowDemoUIClient } from "@/lib/demo/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { LoadingSpinner } from "@/components/shared/page-header";
 
 function SignupForm() {
   const router = useRouter();
-  const demoMode = isDemoModeClient();
+  const demoMode = shouldShowDemoUIClient();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
